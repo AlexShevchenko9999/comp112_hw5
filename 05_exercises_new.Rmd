@@ -115,13 +115,18 @@ ggplotly(first_harvest_weight,
   2. Use animation to tell an interesting story with the `small_trains` dataset that contains data from the SNCF (National Society of French Railways). These are Tidy Tuesday data! Read more about it [here](https://github.com/rfordatascience/tidytuesday/tree/master/data/2019/2019-02-26).
 
 
-```{r}
+```{r, eval = FALSE}
 small_trains %>%
   filter(departure_station == c("AIX EN PROVENCE TGV")) %>% #Trains that depart from these stations
   ggplot(aes(x = delayed_number, y = delay_cause)) + 
   geom_jitter() +
   transition_time(year)
+
+anim_save("Question2.gif")
   
+```
+```{r}
+knitr::include_graphics("Question2.gif")
 ```
 
 
@@ -133,7 +138,7 @@ small_trains %>%
   * Use the data you just made to create a static cumulative harvest area plot, with the areas filled with different colors for each variety and arranged (HINT: `fct_reorder()`) from most to least harvested weights (most on the bottom).  
   * Add animation to reveal the plot over date. Instead of having a legend, place the variety names directly on the graph (refer back to the tutorial for how to do this).
 
-```{r}
+```{r, eval=FALSE}
 garden_harvest %>% 
   filter(vegetable == "tomatoes") %>% 
   group_by(date, variety) %>% 
@@ -141,8 +146,20 @@ garden_harvest %>%
   ungroup() %>% 
   complete(variety, 
            date, 
-           fill = list(daily_harvest_lb = 0))
+           fill = list(daily_harvest_lb = 0)) %>%
+  group_by(variety) %>%
+  mutate(cum_harvest = cumsum((daily_harvest_lb))) %>%
+  ggplot(aes (x = date, y = cum_harvest, fill = fct_reorder(variety, cum_harvest, sum, .desc = TRUE))) +
+  geom_area() +
+  labs(title = "Cumulitive Weight of Different Types of Tomatoes over Time",
+       subtitle = "Date : {frame_along}") + 
+  theme(legend.position = "none") + 
+  transition_reveal(date)
   
+  anim_save("Question3.gif")
+```
+```{r}
+knitr::include_graphics("Question3.gif")
 ```
 
 
