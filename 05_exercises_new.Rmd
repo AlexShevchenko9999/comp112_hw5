@@ -191,15 +191,50 @@ ggmap(bike_map) +
   labs(title = "Bike Path",
        subtitle = "Time: {frame_along}") + 
   transition_reveal(time)
+
+anim_save("Question4.gif")
 ```
   
+```{r}
+knitr::include_graphics("Question4.gif")
+```
   
   
   5. In this exercise, you get to meet Lisa's sister, Heather! She is a proud Mac grad, currently works as a Data Scientist where she uses R everyday, and for a few years (while still holding a full-time job) she was a pro triathlete. You are going to map one of her races. The data from each discipline of the Ironman 70.3 Pan Am championships, Panama is in a separate file - `panama_swim`, `panama_bike`, and `panama_run`. Create a similar map to the one you created with my cycling data. You will need to make some small changes: 1. combine the files putting them in swim, bike, run order (HINT: `bind_rows()`), 2. make the leading dot a different color depending on the event (for an extra challenge, make it a different image using `geom_image()!), 3. CHALLENGE (optional): color by speed, which you will need to compute on your own from the data. You can read Heather's race report [here](https://heatherlendway.com/2016/02/10/ironman-70-3-pan-american-championships-panama-race-report/). She is also in the Macalester Athletics [Hall of Fame](https://athletics.macalester.edu/honors/hall-of-fame/heather-lendway/184) and still has records at the pool. 
   
 ```{r}
+panama_map <- get_stamenmap(
+  bbox = c(left = -79.55505, right = 	-79.51230, top = 8.985033, bottom = 8.913268), 
+  maptype = "terrain",
+  zoom = 13
+)
 
+panama_data_joined <- bind_rows(panama_swim, panama_bike,panama_run) 
+
+ggmap(panama_map) +
+  geom_point(data = panama_data_joined,
+             aes(x = lon, y = lat,color = event, size = 2)) + 
+  geom_line(data = panama_data_joined, 
+            aes(x = lon, y= lat, alpha = .5)) + 
+  theme_map() +
+  theme(legend.background = element_blank(),
+        legend.position = "right") + 
+  labs(title = "Panama Events",
+       subtitle = "Time: {frame_along}",
+       x = "",
+       y = "",
+       color = "event") + 
+  transition_reveal(time)
+
+anim_save("Question5.gif")
+  
 ```
+  
+```{r}
+knitr::include_graphics("Question5.gif")
+```
+  
+  
   
 ## COVID-19 data
 
@@ -218,7 +253,46 @@ census_pop_est_2018 <- read_csv("https://www.dropbox.com/s/6txwv3b4ng7pepe/us_ce
   mutate(state = str_to_lower(state))
 
 states_map <- map_data("state")
+
+states_map
+
 ```
+
+
+```{r}
+covid19_merged <- covid19 %>%
+  filter(day(date) == 15) %>%
+  mutate(state_name = str_to_lower(state)) %>%
+  left_join(census_pop_est_2018,
+            by = c("state_name" = "state")) %>% 
+  mutate(cases_per_10000 = (cases/est_pop_2018)*10000)
+
+
+covid_animation <- covid19_merged %>%
+  ggplot() +
+  geom_map(map = states_map,
+           aes(map_id = state_name,
+               fill = cases_per_10000, 
+               group = date)) +
+  expand_limits(x = states_map$long, y = states_map$lat) + 
+  theme_map() + 
+  labs(title = "Covid Cases By State Over Time",
+       subtitle = "Date: {closest_state}",
+       x = "",
+       y = "") + 
+  transition_states(date) # used transition states over transition_time since we are only using 15th day of each month, and cycling between these dates
+
+animate(covid_animation, nframes = 200, end_pause = 10)
+
+anim_save("Question6.gif")
+
+
+```
+
+```{r}
+knitr::include_graphics("Question6.gif")
+```
+
 
 ## Your first `shiny` app (for next week!)
 
